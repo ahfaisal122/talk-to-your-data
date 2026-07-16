@@ -24,9 +24,16 @@ def get_api_key():
 
 
 def _has_expected_tables() -> bool:
-    con = duckdb.connect(DB_PATH, read_only=True)
-    existing = {row[0] for row in con.execute("SHOW TABLES").fetchall()}
-    con.close()
+    try:
+        con = duckdb.connect(DB_PATH, read_only=True)
+    except duckdb.Error:
+        return False
+    try:
+        existing = {row[0] for row in con.execute("SHOW TABLES").fetchall()}
+    except duckdb.Error:
+        return False
+    finally:
+        con.close()
     return set(TABLES.keys()).issubset(existing)
 
 

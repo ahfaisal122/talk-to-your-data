@@ -1,5 +1,7 @@
 """Load the Olist Brazilian E-Commerce dataset (Kaggle) into DuckDB."""
 
+import os
+
 import duckdb
 import kagglehub
 
@@ -19,6 +21,12 @@ TABLES = {
 
 
 def seed_database():
+    # Remove any existing DB file (including one left corrupted/partial by an
+    # interrupted prior run) so we always start from a clean, valid database.
+    for path in (DB_PATH, f"{DB_PATH}.wal"):
+        if os.path.exists(path):
+            os.remove(path)
+
     data_dir = kagglehub.dataset_download("olistbr/brazilian-ecommerce")
     con = duckdb.connect(DB_PATH)
 
