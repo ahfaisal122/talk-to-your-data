@@ -134,9 +134,14 @@ st.caption("Ask questions about your e-commerce data in plain English")
 
 with st.sidebar:
     st.header("⚙️ Settings")
-    api_key = st.text_input("Google API Key", type="password", value=get_api_key())
-    if not api_key:
-        st.warning("Enter your Google API key to get started.")
+    server_api_key = get_api_key()
+    if server_api_key:
+        api_key = server_api_key
+        st.success("Google API key configured.")
+    else:
+        api_key = st.text_input("Google API Key", type="password")
+        if not api_key:
+            st.warning("Enter your Google API key to get started.")
 
     st.divider()
     st.header("📊 Database Info")
