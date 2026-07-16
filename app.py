@@ -103,6 +103,21 @@ def execute_query(sql: str) -> pd.DataFrame:
     return df
 
 
+def get_table_names() -> list:
+    con = get_db()
+    tables = [row[0] for row in con.execute("SHOW TABLES").fetchall()]
+    con.close()
+    return tables
+
+
+def get_table_preview(table_name: str, limit: int = 15):
+    con = get_db()
+    df = con.execute(f"SELECT * FROM {table_name} LIMIT {limit}").fetchdf()
+    total_rows = con.execute(f"SELECT COUNT(*) FROM {table_name}").fetchone()[0]
+    con.close()
+    return df, total_rows
+
+
 def auto_chart(df: pd.DataFrame, question: str):
     if len(df) == 0 or len(df.columns) < 2:
         return None
@@ -144,6 +159,19 @@ def auto_chart(df: pd.DataFrame, question: str):
 
 st.title("💬 Talk to Your Data")
 st.caption("Ask questions about your e-commerce data in plain English")
+
+with st.container(border=True):
+    table_names = get_table_names()
+    default_index = table_names.index("customers") if "customers" in table_names else 0
+    selected_table = st.selectbox("Select table", table_names, index=default_index)
+
+    preview_df, total_rows = get_table_preview(selected_table, limit=15)
+    st.dataframe(preview_df, use_container_width=True)
+
+    if total_rows > len(preview_df):
+        st.caption(f"more — showing {len(preview_df)} of {total_rows:,} rows")
+
+st.divider()
 
 with st.sidebar:
     st.header("⚙️ Settings")
