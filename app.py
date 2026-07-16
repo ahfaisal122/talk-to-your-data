@@ -11,7 +11,28 @@ from seed_data import seed_database, TABLES
 
 DB_PATH = "ecommerce.duckdb"
 
-st.set_page_config(page_title="Talk to Your Data", page_icon="💬", layout="wide")
+st.set_page_config(page_title="Talk to Your Data", page_icon="💬", layout="wide", initial_sidebar_state="expanded")
+
+st.markdown(
+    """
+    <style>
+    /* Keep the sidebar permanently open on desktop/tablet widths.
+       Below 768px, leave Streamlit's default collapsible behavior
+       alone so mobile users can still hide it to see the main content. */
+    @media (min-width: 768px) {
+        [data-testid="stSidebarCollapseButton"] {
+            display: none;
+        }
+    }
+
+    /* Lift the chat input a little off the very bottom edge. */
+    [data-testid="stBottom"] {
+        bottom: 18px;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
 
 
 def get_api_key():
@@ -126,7 +147,7 @@ def get_table_names() -> list:
 
 def get_table_preview(table_name: str, limit: int = 15):
     con = get_db()
-    df = con.execute(f"SELECT * FROM {table_name} LIMIT {limit}").fetchdf()
+    df = con.execute(f"SELECT * FROM {table_name} USING SAMPLE {limit} ROWS").fetchdf()
     total_rows = con.execute(f"SELECT COUNT(*) FROM {table_name}").fetchone()[0]
     con.close()
     return df, total_rows
@@ -179,7 +200,10 @@ with st.container(border=True):
     default_index = table_names.index("customers") if "customers" in table_names else 0
     selected_table = st.selectbox("Select table", table_names, index=default_index)
 
-    preview_df, total_rows = get_table_preview(selected_table, limit=15)
+    preview_cache_key = f"table_preview::{selected_table}"
+    if preview_cache_key not in st.session_state:
+        st.session_state[preview_cache_key] = get_table_preview(selected_table, limit=15)
+    preview_df, total_rows = st.session_state[preview_cache_key]
     st.dataframe(preview_df, width="stretch")
 
     if total_rows > len(preview_df):
