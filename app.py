@@ -173,7 +173,7 @@ with st.container(border=True):
     selected_table = st.selectbox("Select table", table_names, index=default_index)
 
     preview_df, total_rows = get_table_preview(selected_table, limit=15)
-    st.dataframe(preview_df, use_container_width=True)
+    st.dataframe(preview_df, width="stretch")
 
     if total_rows > len(preview_df):
         st.caption(f"more — showing {len(preview_df)} of {total_rows:,} rows")
@@ -219,9 +219,9 @@ for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
         if "df" in msg:
-            st.dataframe(msg["df"], use_container_width=True)
+            st.dataframe(msg["df"], width="stretch")
         if "chart" in msg:
-            st.plotly_chart(msg["chart"], use_container_width=True)
+            st.plotly_chart(msg["chart"], width="stretch")
         if "sql" in msg:
             with st.expander("View SQL"):
                 st.code(msg["sql"], language="sql")
@@ -258,11 +258,11 @@ if question:
 
                     response_text = f"**{explanation}**\n\nFound **{len(df)}** rows."
                     st.markdown(response_text)
-                    st.dataframe(df, use_container_width=True)
+                    st.dataframe(df, width="stretch")
 
                     chart = auto_chart(df, question)
                     if chart:
-                        st.plotly_chart(chart, use_container_width=True)
+                        st.plotly_chart(chart, width="stretch")
 
                     with st.expander("View SQL"):
                         st.code(sql, language="sql")
