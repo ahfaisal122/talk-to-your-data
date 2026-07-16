@@ -55,23 +55,36 @@ Rules:
 1. Return ONLY a JSON object with two keys: "sql" (the SQL query string) and "explanation" (a brief explanation of what the query does).
 2. Use DuckDB SQL syntax.
 3. Always use table and column names exactly as shown in the schema.
-4. For date filtering, the data ranges from 2023-06 to 2025-06. Use DATE literals like DATE '2025-01-01'.
-5. When asked about "last quarter", "this year", etc., calculate relative to 2025-06-30.
-6. For revenue/sales questions, use the total_amount column from orders.
+4. For date filtering, base ranges on the actual values shown in the sample rows above. Treat {reference_date} as "today" when interpreting relative time phrases like "last quarter" or "this year".
+5. There is no total-amount column on `orders`. For revenue/sales amounts, sum `order_items.price` (add `freight_value` for shipping revenue too) or sum `order_payments.payment_value`, joining via `order_id` as needed — pick whichever matches the question.
+6. Product categories in `products.product_category_name` are in Portuguese; join `category_translation` on that column to get English names when relevant.
 7. Always limit results to at most 50 rows unless the user asks for more.
 8. Do NOT use any DML statements (INSERT, UPDATE, DELETE, DROP, etc.) — only SELECT queries.
 9. Return valid JSON only, no markdown code fences."""
 
 
+def get_reference_date() -> str:
+    try:
+        con = get_db()
+        result = con.execute("SELECT MAX(order_purchase_timestamp) FROM orders").fetchone()
+        con.close()
+        if result and result[0]:
+            return str(result[0])[:10]
+    except duckdb.Error:
+        pass
+    return "today"
+
+
 def generate_sql(question: str, api_key: str) -> dict:
     client = genai.Client(api_key=api_key)
     schema = get_schema_description()
+    reference_date = get_reference_date()
 
     response = client.models.generate_content(
         model="gemini-flash-latest",
         contents=question,
         config=genai_types.GenerateContentConfig(
-            system_instruction=SYSTEM_PROMPT.format(schema=schema),
+            system_instruction=SYSTEM_PROMPT.format(schema=schema, reference_date=reference_date),
             response_mime_type="application/json",
         ),
     )
@@ -151,14 +164,14 @@ with st.sidebar:
     st.divider()
     st.markdown("**Sample questions:**")
     sample_questions = [
-        "What are the top 5 products by revenue?",
-        "Show monthly revenue trend for 2024",
-        "Which category has the most orders?",
-        "What's the average order value by region?",
-        "Top 10 customers by total spending",
-        "Revenue breakdown by payment method",
-        "How many orders were returned vs completed?",
-        "Best selling products in Electronics category",
+        "What are the top 10 product categories by revenue?",
+        "Show monthly order volume trend for 2017",
+        "What's the average review score by product category?",
+        "Which state has the highest average freight value?",
+        "Top 10 sellers by total sales",
+        "Revenue breakdown by payment type",
+        "How many orders were delivered vs canceled?",
+        "Average delivery time in days by state",
     ]
     for q in sample_questions:
         if st.button(q, key=q):

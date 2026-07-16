@@ -4,10 +4,14 @@ Ask questions about an e-commerce dataset in plain English and get back SQL, res
 
 ## How it works
 
-1. You ask a question (e.g. "What are the top 5 products by revenue?")
+1. You ask a question (e.g. "What are the top 10 product categories by revenue?")
 2. Gemini converts it into a DuckDB SQL query based on the schema
 3. The query runs against a local DuckDB database
 4. Results are shown as a table and an auto-picked chart
+
+## Dataset
+
+Real data — the [Olist Brazilian E-Commerce dataset](https://www.kaggle.com/datasets/olistbr/brazilian-ecommerce) from Kaggle (9 tables: customers, orders, order_items, order_payments, order_reviews, products, sellers, geolocation, category translations; ~100K orders spanning 2016–2018). [seed_data.py](seed_data.py) downloads it via `kagglehub` and loads it into DuckDB on first run — no Kaggle account needed.
 
 
 
