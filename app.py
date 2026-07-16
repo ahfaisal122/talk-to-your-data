@@ -7,7 +7,7 @@ from google.genai import errors as genai_errors
 from google.genai import types as genai_types
 import json
 import os
-from seed_data import seed_database
+from seed_data import seed_database, TABLES
 
 DB_PATH = "ecommerce.duckdb"
 
@@ -23,8 +23,15 @@ def get_api_key():
     return os.environ.get("GOOGLE_API_KEY", "")
 
 
+def _has_expected_tables() -> bool:
+    con = duckdb.connect(DB_PATH, read_only=True)
+    existing = {row[0] for row in con.execute("SHOW TABLES").fetchall()}
+    con.close()
+    return set(TABLES.keys()).issubset(existing)
+
+
 def get_db():
-    if not os.path.exists(DB_PATH):
+    if not os.path.exists(DB_PATH) or not _has_expected_tables():
         seed_database()
     return duckdb.connect(DB_PATH, read_only=True)
 
