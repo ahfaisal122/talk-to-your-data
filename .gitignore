@@ -6,3 +6,5 @@ ecommerce.duckdb
 ecommerce.duckdb.wal
 .venv/
 venv/
+.claude/settings.json
+.claude/settings.local.json
