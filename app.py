@@ -2,6 +2,7 @@ import streamlit as st
 import duckdb
 import pandas as pd
 import plotly.express as px
+import sqlparse
 from google import genai
 from google.genai import errors as genai_errors
 from google.genai import types as genai_types
@@ -87,7 +88,7 @@ Here is the database schema:
 {schema}
 
 Rules:
-1. Return ONLY a JSON object with two keys: "sql" (the SQL query string) and "explanation" (a brief explanation of what the query does).
+1. Return ONLY a JSON object with two keys: "sql" (the SQL query string) and "explanation" (a short, numbered, step-by-step breakdown, in plain English, of how the query answers the question — e.g. "1. Start from the `orders` table...", "2. Join `order_items` to get...", "3. Group by ... and average ...". Keep each step to one short sentence, 3-5 steps total.).
 2. Use DuckDB SQL syntax.
 3. Always use table and column names exactly as shown in the schema.
 4. For date filtering, base ranges on the actual values shown in the sample rows above. Treat {reference_date} as "today" when interpreting relative time phrases like "last quarter" or "this year".
@@ -129,6 +130,10 @@ def generate_sql(question: str, api_key: str) -> dict:
         response_text = response_text.split("\n", 1)[1].rsplit("```", 1)[0].strip()
 
     return json.loads(response_text)
+
+
+def format_sql(sql: str) -> str:
+    return sqlparse.format(sql, reindent=True, keyword_case="upper", indent_width=4)
 
 
 def execute_query(sql: str) -> pd.DataFrame:
@@ -216,7 +221,7 @@ with st.sidebar:
     server_api_key = get_api_key()
     if server_api_key:
         api_key = server_api_key
-        st.success("Google API key configured.")
+        st.success("Api Key configured.")
     else:
         api_key = st.text_input("Google API Key", type="password")
         if not api_key:
@@ -286,8 +291,9 @@ if question:
                         raise ValueError("Only SELECT queries are allowed.")
 
                     df = execute_query(sql)
+                    formatted_sql = format_sql(sql)
 
-                    response_text = f"**{explanation}**\n\nFound **{len(df)}** rows."
+                    response_text = f"{explanation}\n\nFound **{len(df)}** rows."
                     st.markdown(response_text)
                     st.dataframe(df, width="stretch")
 
@@ -296,9 +302,9 @@ if question:
                         st.plotly_chart(chart, width="stretch")
 
                     with st.expander("View SQL"):
-                        st.code(sql, language="sql")
+                        st.code(formatted_sql, language="sql")
 
-                    msg_data = {"role": "assistant", "content": response_text, "sql": sql, "df": df}
+                    msg_data = {"role": "assistant", "content": response_text, "sql": formatted_sql, "df": df}
                     if chart:
                         msg_data["chart"] = chart
                     st.session_state.messages.append(msg_data)
