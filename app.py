@@ -256,11 +256,15 @@ for msg in st.session_state.messages:
         st.markdown(msg["content"])
         if "df" in msg:
             st.dataframe(msg["df"], width="stretch")
-        if "chart" in msg:
-            st.plotly_chart(msg["chart"], width="stretch")
         if "sql" in msg:
             with st.expander("View SQL"):
                 st.code(msg["sql"], language="sql")
+        if msg.get("explanation"):
+            with st.expander("View Hints"):
+                st.markdown("Here's one way to break the question down into the logic behind the SQL:")
+                st.markdown(msg["explanation"])
+        if "chart" in msg:
+            st.plotly_chart(msg["chart"], width="stretch")
 
 prefill = st.session_state.pop("prefill_question", None)
 question = st.chat_input("Ask a question about your data...", key="chat_input")
@@ -293,18 +297,29 @@ if question:
                     df = execute_query(sql)
                     formatted_sql = format_sql(sql)
 
-                    response_text = f"{explanation}\n\nFound **{len(df)}** rows."
+                    response_text = f"Found **{len(df)}** rows."
                     st.markdown(response_text)
                     st.dataframe(df, width="stretch")
+
+                    with st.expander("View SQL"):
+                        st.code(formatted_sql, language="sql")
+
+                    if explanation:
+                        with st.expander("View Hints"):
+                            st.markdown("Here's one way to break the question down into the logic behind the SQL:")
+                            st.markdown(explanation)
 
                     chart = auto_chart(df, question)
                     if chart:
                         st.plotly_chart(chart, width="stretch")
 
-                    with st.expander("View SQL"):
-                        st.code(formatted_sql, language="sql")
-
-                    msg_data = {"role": "assistant", "content": response_text, "sql": formatted_sql, "df": df}
+                    msg_data = {
+                        "role": "assistant",
+                        "content": response_text,
+                        "sql": formatted_sql,
+                        "df": df,
+                        "explanation": explanation,
+                    }
                     if chart:
                         msg_data["chart"] = chart
                     st.session_state.messages.append(msg_data)
