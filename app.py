@@ -124,7 +124,7 @@ st.caption("Ask questions about your e-commerce data in plain English")
 with st.container(border=True, key="table_preview"):
     table_names = get_table_names()
     default_index = table_names.index("customers") if "customers" in table_names else 0
-    selected_table = st.selectbox("Select table", table_names, index=default_index)
+    selected_table = st.selectbox("Select table to explore data", table_names, index=default_index)
 
     preview_cache_key = f"table_preview::{selected_table}"
     if preview_cache_key not in st.session_state:
