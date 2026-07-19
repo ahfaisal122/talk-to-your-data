@@ -160,7 +160,6 @@ with st.sidebar:
 
     st.divider()
     st.markdown("**Sample questions:**")
-    st.caption("These run instantly — no API key needed.")
     sample_questions = [
         "What are the top 10 product categories by revenue?",
         "Show monthly order volume trend for 2017",
