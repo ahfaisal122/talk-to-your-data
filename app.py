@@ -2,6 +2,7 @@ import streamlit as st
 import duckdb
 import json
 import os
+import time
 from google.genai import errors as genai_errors
 from query_engine import (
     generate_sql,
@@ -14,6 +15,8 @@ from query_engine import (
 )
 
 SAMPLE_CACHE_PATH = "sample_cache.json"
+MAX_QUERIES_PER_SESSION = 5
+SESSION_TTL_SECONDS = 30 * 60
 
 st.set_page_config(page_title="Talk to Your Data", page_icon="💬", layout="wide", initial_sidebar_state="expanded")
 
@@ -63,6 +66,26 @@ HINT_INTRO = (
     "filtering, grouping, or ordering turns the raw rows into the answer."
 )
 
+
+def reset_session():
+    st.session_state.session_start = time.time()
+    st.session_state.query_count = 0
+    st.session_state.messages = []
+
+
+if "session_start" not in st.session_state:
+    reset_session()
+elif time.time() - st.session_state.session_start > SESSION_TTL_SECONDS:
+    reset_session()
+
+session_elapsed = time.time() - st.session_state.session_start
+minutes_left = max(0, int((SESSION_TTL_SECONDS - session_elapsed) // 60))
+queries_left = MAX_QUERIES_PER_SESSION - st.session_state.query_count
+
+pending_toast = st.session_state.pop("pending_toast", None)
+if pending_toast:
+    st.toast(pending_toast[0], icon=pending_toast[1])
+
 # --- UI ---
 
 st.title("💬 Talk to Your Data")
@@ -75,7 +98,7 @@ with st.container(border=True):
 
     preview_cache_key = f"table_preview::{selected_table}"
     if preview_cache_key not in st.session_state:
-        st.session_state[preview_cache_key] = get_table_preview(selected_table, limit=15)
+        st.session_state[preview_cache_key] = get_table_preview(selected_table, limit=10)
     preview_df, total_rows = st.session_state[preview_cache_key]
     st.dataframe(preview_df, width="stretch")
 
@@ -85,6 +108,11 @@ with st.container(border=True):
 st.divider()
 
 with st.sidebar:
+    if queries_left > 0:
+        st.caption(f"🔢 {queries_left}/{MAX_QUERIES_PER_SESSION} queries left this session · resets in {minutes_left} min")
+    else:
+        st.caption(f"🔢 Session limit reached · resets in {minutes_left} min")
+
     st.header("⚙️ Settings")
     server_api_key = get_api_key()
     if server_api_key:
@@ -114,11 +142,8 @@ with st.sidebar:
         "Average delivery time in days by state",
     ]
     for q in sample_questions:
-        if st.button(q, key=q):
+        if st.button(q, key=q, disabled=queries_left <= 0):
             st.session_state["prefill_question"] = q
-
-if "messages" not in st.session_state:
-    st.session_state.messages = []
 
 for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
@@ -137,10 +162,16 @@ for msg in st.session_state.messages:
 
 sample_cache = load_sample_cache()
 
+if queries_left <= 0:
+    st.info(f"You've used all {MAX_QUERIES_PER_SESSION} queries for this session. It resets automatically in {minutes_left} min.")
+
 prefill = st.session_state.pop("prefill_question", None)
-question = st.chat_input("Ask a question about your data...", key="chat_input")
+question = st.chat_input("Ask a question about your data...", key="chat_input", disabled=queries_left <= 0)
 if prefill and not question:
     question = prefill
+
+if question and queries_left <= 0:
+    question = None
 
 if question:
     st.session_state.messages.append({"role": "user", "content": question})
@@ -155,6 +186,7 @@ if question:
         with st.chat_message("assistant"):
             st.warning(err_msg)
     else:
+        st.session_state.query_count += 1
         with st.chat_message("assistant"):
             with st.spinner("Thinking..."):
                 try:
@@ -217,3 +249,14 @@ if question:
                     err = f"Error: {e}"
                     st.error(err)
                     st.session_state.messages.append({"role": "assistant", "content": err})
+
+        remaining_after = MAX_QUERIES_PER_SESSION - st.session_state.query_count
+        if remaining_after > 0:
+            unit = "query" if remaining_after == 1 else "queries"
+            st.session_state.pending_toast = (f"You have only **{remaining_after}** {unit} left in this session.", "⏳")
+        else:
+            st.session_state.pending_toast = ("That was your last query for this session — it resets automatically in 30 min.", "🔒")
+
+    # Rerun so the sidebar's query count/disabled states reflect this turn immediately,
+    # instead of lagging one interaction behind (the sidebar renders before this block).
+    st.rerun()
