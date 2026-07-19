@@ -36,6 +36,36 @@ st.markdown(
     [data-testid="stBottom"] {
         bottom: 18px;
     }
+
+    /* Colorful gradient underline beneath the page title. */
+    h1 {
+        padding-bottom: 0.3rem;
+        border-bottom: 4px solid transparent;
+        border-image: linear-gradient(90deg, #E8523F, #F5A623, #16A394, #7C5CFC) 1;
+    }
+
+    /* Highlight the "View Hints" expander (indigo) and "View SQL" expander (teal)
+       so the two toggles stand out from the rest of the response. Targeted via
+       st.expander(key=...), which Streamlit renders as a "st-key-<key>" class on
+       the expander's wrapper div (not the expander itself, hence the descendant selector). */
+    div[class*="st-key-hints"] [data-testid="stExpander"] {
+        background-color: #F1EEFF;
+        border: 1px solid #7C5CFC;
+        border-left: 5px solid #7C5CFC;
+        border-radius: 10px;
+    }
+    div[class*="st-key-sql"] [data-testid="stExpander"] {
+        background-color: #E8FBF6;
+        border: 1px solid #16A394;
+        border-left: 5px solid #16A394;
+        border-radius: 10px;
+    }
+
+    /* Colorful top accent on the table preview panel. */
+    div[class*="st-key-table_preview"] {
+        border-top: 4px solid #E8523F !important;
+        border-radius: 10px;
+    }
     </style>
     """,
     unsafe_allow_html=True,
@@ -91,7 +121,7 @@ if pending_toast:
 st.title("💬 Talk to Your Data")
 st.caption("Ask questions about your e-commerce data in plain English")
 
-with st.container(border=True):
+with st.container(border=True, key="table_preview"):
     table_names = get_table_names()
     default_index = table_names.index("customers") if "customers" in table_names else 0
     selected_table = st.selectbox("Select table", table_names, index=default_index)
@@ -145,17 +175,17 @@ with st.sidebar:
         if st.button(q, key=q, disabled=queries_left <= 0):
             st.session_state["prefill_question"] = q
 
-for msg in st.session_state.messages:
+for idx, msg in enumerate(st.session_state.messages):
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
         if "df" in msg:
             st.dataframe(msg["df"], width="stretch")
         if msg.get("explanation"):
             st.markdown(HINT_INTRO)
-            with st.expander("View Hints"):
+            with st.expander("View Hints", key=f"hints_{idx}", icon="💡"):
                 st.markdown(msg["explanation"])
         if "sql" in msg:
-            with st.expander("View SQL"):
+            with st.expander("View SQL", key=f"sql_{idx}", icon="🗄️"):
                 st.code(msg["sql"], language="sql")
         if "chart" in msg:
             st.plotly_chart(msg["chart"], width="stretch")
@@ -212,10 +242,10 @@ if question:
 
                     if explanation:
                         st.markdown(HINT_INTRO)
-                        with st.expander("View Hints"):
+                        with st.expander("View Hints", key="hints_live", icon="💡"):
                             st.markdown(explanation)
 
-                    with st.expander("View SQL"):
+                    with st.expander("View SQL", key="sql_live", icon="🗄️"):
                         st.code(formatted_sql, language="sql")
 
                     chart = auto_chart(df, question)
