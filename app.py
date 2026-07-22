@@ -195,7 +195,7 @@ if queries_left <= 0:
     st.info(f"You've used all {MAX_QUERIES_PER_SESSION} queries for this session. It resets automatically in {minutes_left} min.")
 
 prefill = st.session_state.pop("prefill_question", None)
-question = st.chat_input("Ask a question about your data...", key="chat_input", disabled=queries_left <= 0)
+question = st.chat_input("Ask a question about your e-commerce data...", key="chat_input", disabled=queries_left <= 0)
 if prefill and not question:
     question = prefill
 
