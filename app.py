@@ -41,7 +41,7 @@ st.markdown(
     h1 {
         padding-bottom: 0.3rem;
         border-bottom: 4px solid transparent;
-        border-image: linear-gradient(90deg, #E8523F, #F5A623, #16A394, #7C5CFC) 1;
+        border-image: linear-gradient(90deg, #E8523F, #7C5CFC) 1;
     }
 
     /* Highlight the "View Hints" expander (indigo) and "View SQL" expander (teal)
@@ -63,7 +63,7 @@ st.markdown(
 
     /* Colorful top accent on the table preview panel. */
     div[class*="st-key-table_preview"] {
-        border-top: 4px solid #E8523F !important;
+        border-top: 4px solid #16A394 !important;
         border-radius: 10px;
     }
     </style>
