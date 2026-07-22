@@ -199,6 +199,7 @@ question = st.chat_input("Ask a question about your e-commerce data...", key="ch
 if prefill and not question:
     question = prefill
 
+
 if question and queries_left <= 0:
     question = None
 
