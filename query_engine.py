@@ -1,4 +1,5 @@
 import os
+import threading
 import duckdb
 import pandas as pd
 import plotly.express as px
@@ -9,6 +10,13 @@ import json
 from seed_data import seed_database, TABLES
 
 DB_PATH = "ecommerce.duckdb"
+
+# Streamlit serves every user session as a thread in the same process. Without
+# this lock, two sessions hitting a missing/stale DB at once can both start
+# seed_database() concurrently (or one can try to open a read-only connection
+# while another is mid-write), which DuckDB rejects with a ConnectionException
+# since only one connection may hold the database file at a time.
+_db_lock = threading.Lock()
 
 
 def _has_expected_tables() -> bool:
@@ -26,9 +34,16 @@ def _has_expected_tables() -> bool:
 
 
 def get_db():
-    if not os.path.exists(DB_PATH) or not _has_expected_tables():
-        seed_database()
-    return duckdb.connect(DB_PATH, read_only=True)
+    with _db_lock:
+        if not os.path.exists(DB_PATH) or not _has_expected_tables():
+            seed_database()
+        try:
+            return duckdb.connect(DB_PATH, read_only=True)
+        except duckdb.Error:
+            # Leftover corruption from before this lock existed, or from a
+            # process that crashed mid-write. Reseed once and retry.
+            seed_database()
+            return duckdb.connect(DB_PATH, read_only=True)
 
 
 def get_schema_description():
