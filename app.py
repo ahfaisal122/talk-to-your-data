@@ -14,6 +14,10 @@ from query_engine import (
     auto_chart,
 )
 
+class OutOfScopeQuestion(Exception):
+    pass
+
+
 SAMPLE_CACHE_PATH = "sample_cache.json"
 MAX_QUERIES_PER_SESSION = 5
 SESSION_TTL_SECONDS = 30 * 60
@@ -228,6 +232,12 @@ if question:
                         sql = result["sql"]
                         explanation = result.get("explanation", "")
 
+                    if not sql.strip() or not any(t.lower() in sql.lower() for t in table_names):
+                        raise OutOfScopeQuestion(
+                            "I can only answer questions about this e-commerce dataset — "
+                            "try asking about orders, products, customers, sellers, payments, or reviews."
+                        )
+
                     forbidden = ["INSERT", "UPDATE", "DELETE", "DROP", "ALTER", "CREATE", "TRUNCATE"]
                     sql_upper = sql.upper().strip()
                     if any(sql_upper.startswith(kw) for kw in forbidden):
@@ -263,6 +273,10 @@ if question:
                         msg_data["chart"] = chart
                     st.session_state.messages.append(msg_data)
 
+                except OutOfScopeQuestion as e:
+                    err = str(e)
+                    st.warning(err)
+                    st.session_state.messages.append({"role": "assistant", "content": err})
                 except json.JSONDecodeError:
                     err = "Sorry, I couldn't parse the response. Please try rephrasing your question."
                     st.error(err)

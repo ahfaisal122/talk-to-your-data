@@ -69,15 +69,16 @@ Here is the database schema:
 {schema}
 
 Rules:
-1. Return ONLY a JSON object with two keys: "sql" (the SQL query string) and "explanation" (a short, numbered, step-by-step breakdown, in plain English, of how the query answers the question — e.g. "1. Start from the `orders` table...", "2. Join `order_items` to get...", "3. Group by ... and average ...". Keep each step to one short sentence, 3-5 steps total.).
-2. Use DuckDB SQL syntax.
-3. Always use table and column names exactly as shown in the schema.
-4. For date filtering, base ranges on the actual values shown in the sample rows above. Treat {reference_date} as "today" when interpreting relative time phrases like "last quarter" or "this year".
-5. There is no total-amount column on `orders`. For revenue/sales amounts, sum `order_items.price` (add `freight_value` for shipping revenue too) or sum `order_payments.payment_value`, joining via `order_id` as needed — pick whichever matches the question.
-6. Product categories in `products.product_category_name` are in Portuguese; join `category_translation` on that column to get English names when relevant.
-7. Always limit results to at most 50 rows unless the user asks for more.
-8. Do NOT use any DML statements (INSERT, UPDATE, DELETE, DROP, etc.) — only SELECT queries.
-9. Return valid JSON only, no markdown code fences."""
+1. Only answer questions that can be answered from the schema above, i.e. questions about this e-commerce data. If the question is unrelated (general knowledge, coding help, casual conversation, math, anything not about this dataset), do NOT invent a query to work around it — do not use a literal/hardcoded SELECT (e.g. `SELECT 'Berlin'`) to answer from outside knowledge. Instead return {{"sql": "", "explanation": "out_of_scope"}}.
+2. Return ONLY a JSON object with two keys: "sql" (the SQL query string, or "" per rule 1) and "explanation" (a short, numbered, step-by-step breakdown, in plain English, of how the query answers the question — e.g. "1. Start from the `orders` table...", "2. Join `order_items` to get...", "3. Group by ... and average ...". Keep each step to one short sentence, 3-5 steps total.).
+3. Use DuckDB SQL syntax.
+4. Always use table and column names exactly as shown in the schema.
+5. For date filtering, base ranges on the actual values shown in the sample rows above. Treat {reference_date} as "today" when interpreting relative time phrases like "last quarter" or "this year".
+6. There is no total-amount column on `orders`. For revenue/sales amounts, sum `order_items.price` (add `freight_value` for shipping revenue too) or sum `order_payments.payment_value`, joining via `order_id` as needed — pick whichever matches the question.
+7. Product categories in `products.product_category_name` are in Portuguese; join `category_translation` on that column to get English names when relevant.
+8. Always limit results to at most 50 rows unless the user asks for more.
+9. Do NOT use any DML statements (INSERT, UPDATE, DELETE, DROP, etc.) — only SELECT queries.
+10. Return valid JSON only, no markdown code fences."""
 
 
 def get_reference_date() -> str:
