@@ -27,31 +27,24 @@ st.set_page_config(page_title="Talk to Your Data", page_icon="💬", layout="wid
 st.markdown(
     """
     <style>
-    /* Keep the sidebar permanently open on desktop/tablet widths.
-       Below 768px, leave Streamlit's default collapsible behavior
-       alone so mobile users can still hide it to see the main content. */
+    /* Keep the sidebar's collapse button hidden on desktop/tablet, but not on mobile. */
     @media (min-width: 768px) {
         [data-testid="stSidebarCollapseButton"] {
             display: none;
         }
     }
 
-    /* Lift the chat input a little off the very bottom edge. */
     [data-testid="stBottom"] {
         bottom: 18px;
     }
 
-    /* Colorful gradient underline beneath the page title. */
     h1 {
         padding-bottom: 0.3rem;
         border-bottom: 4px solid transparent;
         border-image: linear-gradient(90deg, #E8523F, #7C5CFC) 1;
     }
 
-    /* Highlight the "View Hints" expander (indigo) and "View SQL" expander (teal)
-       so the two toggles stand out from the rest of the response. Targeted via
-       st.expander(key=...), which Streamlit renders as a "st-key-<key>" class on
-       the expander's wrapper div (not the expander itself, hence the descendant selector). */
+    /* st.expander(key=...) puts the "st-key-*" class on the wrapper div, not the expander itself. */
     div[class*="st-key-hints"] [data-testid="stExpander"] {
         background-color: #F1EEFF;
         border: 1px solid #7C5CFC;
@@ -65,7 +58,6 @@ st.markdown(
         border-radius: 10px;
     }
 
-    /* Colorful top accent on the table preview panel. */
     div[class*="st-key-table_preview"] {
         border-top: 4px solid #16A394 !important;
         border-radius: 10px;
@@ -301,6 +293,5 @@ if question:
         else:
             st.session_state.pending_toast = ("That was your last query for this session — it resets automatically in 30 min.", "🔒")
 
-    # Rerun so the sidebar's query count/disabled states reflect this turn immediately,
-    # instead of lagging one interaction behind (the sidebar renders before this block).
+    # Rerun so the sidebar's query count and disabled states update immediately.
     st.rerun()
