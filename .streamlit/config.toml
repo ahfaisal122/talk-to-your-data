@@ -1,9 +1,35 @@
 [theme]
 base = "light"
-primaryColor = "#E8523F"
-backgroundColor = "#FFFFFF"
-secondaryBackgroundColor = "#F3EFFF"
-textColor = "#1A1A1A"
+primaryColor = "#4F46E5"
+backgroundColor = "#F7F8FC"
+secondaryBackgroundColor = "#EEF0F7"
+textColor = "#0F172A"
+borderColor = "#E2E8F0"
+showWidgetBorder = true
+linkColor = "#4F46E5"
+codeBackgroundColor = "#F5F6FB"
+dataframeHeaderBackgroundColor = "#F1F3F9"
+dataframeBorderColor = "#E2E8F0"
+metricValueFontSize = "1.85rem"
+baseRadius = "0.65rem"
+buttonRadius = "0.65rem"
+font = "Inter:https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap, sans-serif"
+headingFont = "Plus Jakarta Sans:https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&display=swap, sans-serif"
+codeFont = "JetBrains Mono:https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap, monospace"
+headingFontWeights = [800, 700, 700, 600, 600, 600]
+chartCategoricalColors = ["#4F46E5", "#06B6D4", "#10B981", "#F59E0B", "#F43F5E", "#8B5CF6", "#EC4899", "#14B8A6", "#F97316", "#64748B"]
+greenColor = "#059669"
+orangeColor = "#D97706"
+redColor = "#E11D48"
+
+[theme.sidebar]
+backgroundColor = "#0B1020"
+secondaryBackgroundColor = "#151B31"
+textColor = "#CBD5E1"
+borderColor = "#1E2642"
+primaryColor = "#818CF8"
+codeBackgroundColor = "#151B31"
+linkColor = "#A5B4FC"
 
 [server]
 headless = true

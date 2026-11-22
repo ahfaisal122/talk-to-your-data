@@ -132,6 +132,15 @@ def get_table_names() -> list:
     return tables
 
 
+def get_table_columns() -> dict:
+    """Return {table_name: [(column_name, column_type), ...]} for every table."""
+    con = get_db()
+    tables = [row[0] for row in con.execute("SHOW TABLES").fetchall()]
+    columns = {t: [(c[0], c[1]) for c in con.execute(f"DESCRIBE {t}").fetchall()] for t in tables}
+    con.close()
+    return columns
+
+
 def get_table_preview(table_name: str, limit: int = 15):
     con = get_db()
     df = con.execute(f"SELECT * FROM {table_name} USING SAMPLE {limit} ROWS").fetchdf()
